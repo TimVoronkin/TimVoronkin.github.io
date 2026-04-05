@@ -3,185 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tim Voronkin | Links & Projects</title>
+    <title>Tim Voronkin | Links</title>
+    <!-- Favicon -->
+    <link rel="icon" href="imgs/favicon.png" type="image/png">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- FontAwesome CDN (updated to 6.5.1 for X Twitter icon) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: {
-                            instagram: '#E1306C',
-                            artstation: '#13AFF0',
-                            telegram: '#26A5E4',
-                            linkedin: '#0077b5',
-                            facebook: '#1877F2',
-                            twitter: '#000000',
-                            youtube: '#FF0000',
-                            discord: '#5865F2'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #000000 0%, #608004 100%);
-            min-height: 100vh;
-        }
-        
-        .glass-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        .link-btn {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .link-btn::before {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%;
-            width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
-            transition: all 0.5s ease;
-        }
-
-        .link-btn:hover {
-            transform: translateY(-2px) scale(1.02);
-            border-color: rgba(255, 255, 255, 0.3);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2), 0 0 15px rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .link-btn:hover::before {
-            left: 100%;
-        }
-
-        /* Specific hover colors based on brand */
-        .link-btn.instagram:hover { border-color: #E1306C; box-shadow: 0 0 15px rgba(225, 48, 108, 0.3); }
-        .link-btn.artstation:hover { border-color: #13AFF0; box-shadow: 0 0 15px rgba(19, 175, 240, 0.3); }
-        .link-btn.telegram:hover { border-color: #26A5E4; box-shadow: 0 0 15px rgba(38, 165, 228, 0.3); }
-        .link-btn.linkedin:hover { border-color: #0077b5; box-shadow: 0 0 15px rgba(0, 119, 181, 0.3); }
-        .link-btn.facebook:hover { border-color: #1877F2; box-shadow: 0 0 15px rgba(24, 119, 242, 0.3); }
-        .link-btn.twitter:hover { border-color: #ffffff; box-shadow: 0 0 15px rgba(255, 255, 255, 0.3); }
-        .link-btn.youtube:hover { border-color: #FF0000; box-shadow: 0 0 15px rgba(255, 0, 0, 0.3); }
-        .link-btn.discord:hover { border-color: #5865F2; box-shadow: 0 0 15px rgba(88, 101, 242, 0.3); }
-
-        .link-icon {
-            position: absolute;
-            left: 1.5rem;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 1.25rem;
-        }
-
-        /* Prevent discord from showing when disabled */
-        .hidden-link {
-            display: none !important;
-        }
-    </style>
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body class="text-gray-100 flex items-center justify-center py-12 px-4 selection:bg-indigo-500 selection:text-white">
+<body class="text-gray-100 flex items-center justify-center py-12 px-4 selection:bg-[#BCF600] selection:text-black relative overflow-x-hidden">
+    
+    <!-- WebGL Canvas for Depth Parallax -->
+    <canvas id="bg-canvas" class="fixed top-0 left-0 w-full h-full -z-20 pointer-events-none"></canvas>
 
-    <main class="w-full max-w-lg glass-card rounded-3xl p-8 pt-10 sm:p-10 relative z-10">
+    <!-- SVG Refraction Filter for Liquid Glass Effect -->
+    <svg style="position: absolute; width: 0; height: 0;" aria-hidden="true">
+        <filter id="refractive-glass" x="-20%" y="-20%" width="140%" height="140%">
+            <!-- Lower frequency/octaves, more blur = smooth liquid drops -->
+            <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="1" result="noise" />
+            <feGaussianBlur in="noise" stdDeviation="5" result="smoothNoise" />
+            <!-- Higher scale makes refraction more noticeable -->
+            <feDisplacementMap in="SourceGraphic" in2="smoothNoise" scale="30" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+    </svg>
+
+    <main class="w-full max-w-lg glass-card rounded-[3rem] p-8 pt-10 sm:p-10 relative z-10">
         
         <!-- Header Section -->
         <header class="flex flex-col items-center mb-10">
-            <div class="relative mb-4 group">
-                <div class="w-28 h-28 rounded-full overflow-hidden border-2 border-white/20 p-1 transition-all duration-300 group-hover:border-white/50 group-hover:shadow-[0_0_20px_rgba(255,255,255,0.2)]">
-                    <!-- Placeholder avatar -->
+            <div id="profile-pic-container" class="relative mb-4 group cursor-pointer" title="Copy page link">
+                <div class="w-28 h-28 rounded-full overflow-hidden border-2 border-white/20 p-1 transition-all duration-300 group-hover:border-[#BCF600]/80 group-hover:shadow-[0_0_25px_rgba(188,246,0,0.5)]">
+                    <!-- Avatar -->
                     <img src="imgs/profile-picture.jpg" alt="Tim Voronkin" class="w-full h-full rounded-full object-cover">
-                    <!-- To use a real image, replace the div above with: -->
-                    <!-- <img src="path-to-your-image.jpg" alt="Tim Voronkin" class="w-full h-full rounded-full object-cover"> -->
                 </div>
+                <!-- Tooltip above the avatar -->
+                <span id="profile-tooltip" class="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-[#BCF600] text-black text-xs font-bold py-1 px-3 rounded-full opacity-0 transition-opacity duration-300 pointer-events-none whitespace-nowrap z-20">Page link copied!</span>
             </div>
             <h1 class="text-3xl font-bold tracking-tight text-white mb-2 text-center">Tim Voronkin</h1>
-            <p class="text-gray-400 font-medium text-sm tracking-widest uppercase mb-2 text-center">My Links & Projects</p>
+            <p class="text-gray-400 font-medium text-sm tracking-widest mb-2 text-center">My social media links</p>
         </header>
 
         <!-- Links Section -->
         <section class="flex flex-col gap-4">
             
-            <a href="https://www.instagram.com/timvoronkin" target="_blank" rel="noopener noreferrer" class="link-btn instagram group block w-full py-4 px-6 rounded-xl text-center text-white/90 font-medium decoration-none relative">
-                <i class="fa-brands fa-instagram link-icon group-hover:text-[#E1306C] transition-colors"></i>
+            <a href="https://www.instagram.com/timvoronkin" target="_blank" rel="noopener noreferrer" class="link-btn instagram group block w-full py-4 px-6 rounded-full text-center text-white/90 font-medium decoration-none relative">
+                <i class="fa-brands fa-instagram link-icon text-gray-300"></i>
                 <span class="relative z-10 w-full inline-block px-10">Instagram - me</span>
             </a>
 
-            <a href="https://instagram.com/Scrap_Art_TimVoronkin" target="_blank" rel="noopener noreferrer" class="link-btn instagram group block w-full py-4 px-6 rounded-xl text-center text-white/90 font-medium decoration-none relative">
-                <i class="fa-brands fa-instagram link-icon group-hover:text-[#E1306C] transition-colors"></i>
+            <a href="https://instagram.com/Scrap_Art_TimVoronkin" target="_blank" rel="noopener noreferrer" class="link-btn instagram group block w-full py-4 px-6 rounded-full text-center text-white/90 font-medium decoration-none relative">
+                <i class="fa-brands fa-instagram link-icon text-gray-300"></i>
                 <span class="relative z-10 w-full inline-block px-10">Instagram - my metal artworks</span>
             </a>
 
-            <a href="https://zvit.artstation.com/" target="_blank" rel="noopener noreferrer" class="link-btn artstation group block w-full py-4 px-6 rounded-xl text-center text-white/90 font-medium decoration-none relative">
-                <i class="fa-brands fa-artstation link-icon group-hover:text-[#13AFF0] transition-colors"></i>
+            <a href="https://zvit.artstation.com/" target="_blank" rel="noopener noreferrer" class="link-btn artstation group block w-full py-4 px-6 rounded-full text-center text-white/90 font-medium decoration-none relative">
+                <i class="fa-brands fa-artstation link-icon text-gray-300"></i>
                 <span class="relative z-10 w-full inline-block px-10">Artstation - my VR projects</span>
             </a>
 
-            <a href="http://t.me/Tim_Voronkin" target="_blank" rel="noopener noreferrer" class="link-btn telegram group block w-full py-4 px-6 rounded-xl text-center text-white/90 font-medium decoration-none relative">
-                <i class="fa-brands fa-telegram link-icon group-hover:text-[#26A5E4] transition-colors"></i>
+            <a href="http://t.me/Tim_Voronkin" target="_blank" rel="noopener noreferrer" class="link-btn telegram group block w-full py-4 px-6 rounded-full text-center text-white/90 font-medium decoration-none relative">
+                <i class="fa-brands fa-telegram link-icon text-gray-300"></i>
                 <span class="relative z-10 w-full inline-block px-10">Telegram - write me</span>
             </a>
 
-            <a href="https://linkedin.com/in/tim-voronkin/" target="_blank" rel="noopener noreferrer" class="link-btn linkedin group block w-full py-4 px-6 rounded-xl text-center text-white/90 font-medium decoration-none relative">
-                <i class="fa-brands fa-linkedin hover:text-[#0077b5] link-icon group-hover:text-[#0077b5] transition-colors"></i>
+            <a href="https://linkedin.com/in/tim-voronkin/" target="_blank" rel="noopener noreferrer" class="link-btn linkedin group block w-full py-4 px-6 rounded-full text-center text-white/90 font-medium decoration-none relative">
+                <i class="fa-brands fa-linkedin link-icon text-gray-300"></i>
                 <span class="relative z-10 w-full inline-block px-10">LinkedIn</span>
             </a>
 
-            <a href="http://facebook.com/TimVoronkin" target="_blank" rel="noopener noreferrer" class="link-btn facebook group block w-full py-4 px-6 rounded-xl text-center text-white/90 font-medium decoration-none relative">
-                <i class="fa-brands fa-facebook link-icon group-hover:text-[#1877F2] transition-colors"></i>
+            <a href="http://facebook.com/TimVoronkin" target="_blank" rel="noopener noreferrer" class="link-btn facebook group block w-full py-4 px-6 rounded-full text-center text-white/90 font-medium decoration-none relative">
+                <i class="fa-brands fa-facebook link-icon text-gray-300"></i>
                 <span class="relative z-10 w-full inline-block px-10">Facebook</span>
             </a>
 
-            <a href="https://x.com/Tim_Voronkin" target="_blank" rel="noopener noreferrer" class="link-btn twitter group block w-full py-4 px-6 rounded-xl text-center text-white/90 font-medium decoration-none relative">
-                <i class="fa-brands fa-x-twitter link-icon group-hover:text-white transition-colors"></i>
-                <span class="relative z-10 w-full inline-block px-10">X / Twitter</span>
+            <a href="https://x.com/Tim_Voronkin" target="_blank" rel="noopener noreferrer" class="link-btn twitter group block w-full py-4 px-6 rounded-full text-center text-white/90 font-medium decoration-none relative">
+                <i class="fa-brands fa-x-twitter link-icon text-gray-300"></i>
+                <span class="relative z-10 w-full inline-block px-10">X</span>
             </a>
 
-            <a href="http://youtube.com/channel/UC8V9Y8C7rXRf4XtoHZDRUyw" target="_blank" rel="noopener noreferrer" class="link-btn youtube group block w-full py-4 px-6 rounded-xl text-center text-white/90 font-medium decoration-none relative">
-                <i class="fa-brands fa-youtube link-icon group-hover:text-[#FF0000] transition-colors"></i>
+            <a href="http://youtube.com/channel/UC8V9Y8C7rXRf4XtoHZDRUyw" target="_blank" rel="noopener noreferrer" class="link-btn youtube group block w-full py-4 px-6 rounded-full text-center text-white/90 font-medium decoration-none relative">
+                <i class="fa-brands fa-youtube link-icon text-gray-300"></i>
                 <span class="relative z-10 w-full inline-block px-10">YouTube</span>
             </a>
 
-            <!-- Hidden Discord Link (Remove 'hidden-link' class to show) -->
-            <a href="https://discord.gg/3rf7qXVkga" target="_blank" rel="noopener noreferrer" class="link-btn discord hidden-link group w-full py-4 px-6 rounded-xl text-center text-white/90 font-medium decoration-none relative block">
-                <i class="fa-brands fa-discord link-icon group-hover:text-[#5865F2] transition-colors"></i>
+            <!-- Hidden Discord Link -->
+            <a href="https://discord.gg/3rf7qXVkga" target="_blank" rel="noopener noreferrer" class="link-btn discord hidden-link group w-full py-4 px-6 rounded-full text-center text-white/90 font-medium decoration-none relative block">
+                <i class="fa-brands fa-discord link-icon text-gray-300"></i>
                 <span class="relative z-10 w-full inline-block px-10">Discord - visit my virtual spaces</span>
             </a>
+
+            <!-- Email (Copy to Clipboard) -->
+            <button type="button" id="copy-email-btn" class="link-btn email group block w-full py-4 px-6 rounded-full text-center text-white/90 font-medium decoration-none relative overflow-hidden outline-none cursor-pointer">
+                <i class="fa-solid fa-envelope link-icon text-gray-300"></i>
+                <span id="email-text" class="relative z-10 w-full inline-block px-10">voronkintim@gmail.com</span>
+            </button>
             
         </section>
 
-        <!-- Optional footer text -->
+        <!-- Footer text -->
         <footer class="mt-12 text-center">
             <p class="text-white/30 text-xs">© 2026 Tim Voronkin. All rights reserved.</p>
         </footer>
 
     </main>
 
-    <!-- Background decoration elements -->
-    <div class="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-600/30 blur-[120px] pointer-events-none -z-10"></div>
-    <div class="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-600/20 blur-[120px] pointer-events-none -z-10"></div>
+    <!-- App Script -->
+    <script src="app.js"></script>
 
+    <!-- Copy to Clipboard Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const copyBtn = document.getElementById('copy-email-btn');
+            const emailText = document.getElementById('email-text');
+            
+            if(copyBtn && emailText) {
+                copyBtn.addEventListener('click', () => {
+                    const textToCopy = "voronkintim@gmail.com";
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        const originalText = emailText.innerText;
+                        emailText.innerText = "Email copied!";
+                        copyBtn.style.color = "#BCF600";
+                        copyBtn.style.borderColor = "#BCF600";
+                        copyBtn.style.background = "rgba(255, 255, 255, 0.08)";
+                        
+                        setTimeout(() => {
+                            emailText.innerText = "voronkintim@gmail.com";
+                            copyBtn.style.color = "";
+                            copyBtn.style.borderColor = "";
+                            copyBtn.style.background = "";
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Failed to copy!', err);
+                    });
+                });
+            }
+
+            // Profile Link Copy
+            const profilePic = document.getElementById('profile-pic-container');
+            const profileTooltip = document.getElementById('profile-tooltip');
+            
+            if (profilePic && profileTooltip) {
+                profilePic.addEventListener('click', () => {
+                    const textToCopy = "https://timvoronkin.github.io/";
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        profileTooltip.classList.remove('opacity-0');
+                        setTimeout(() => {
+                            profileTooltip.classList.add('opacity-0');
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Failed to copy profile link!', err);
+                    });
+                });
+            }
+        });
+    </script>
 </body>
 </html>

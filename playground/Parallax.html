@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parallax Playground Explorer</title>
+    <link rel="icon" href="../imgs/favicon.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; background: #000; color: #fff; }
+        .glass-panel {
+            background: rgba(20, 20, 20, 0.7);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+        /* Custom scrollbar for panel */
+        .glass-panel::-webkit-scrollbar { width: 6px; }
+        .glass-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+    </style>
+</head>
+<body class="w-screen h-screen">
+
+    <!-- WebGL Canvas -->
+    <canvas id="playground-canvas" class="fixed top-0 left-0 w-full h-full -z-10"></canvas>
+
+    <!-- FPS Counter -->
+    <div class="fixed top-4 left-4 z-20 bg-black/50 text-[#BCF600] px-3 py-1.5 rounded-full font-mono text-xs border border-[#BCF600]/30 backdrop-blur-md flex items-center gap-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#BCF600] shadow-[0_0_8px_#BCF600] animate-pulse"></span>
+        <span id="fpsCounter">60 FPS</span>
+        <span id="frameTime" class="text-white/50 text-[10px] ml-1">16.6ms</span>
+    </div>
+
+    <!-- UI Overlay -->
+    <div class="fixed top-4 right-4 w-[340px] glass-panel rounded-2xl p-5 z-10 max-h-[90vh] overflow-y-auto flex flex-col gap-5">
+        <div>
+            <h1 class="text-xl font-bold text-[#BCF600] flex items-center gap-2">
+                Parallax Tweaker
+            </h1>
+            <p class="text-xs text-gray-400 mt-1">Experiment with fake 3D settings</p>
+        </div>
+
+        <!-- Controls Form -->
+        <div class="flex flex-col gap-4 text-sm font-medium">
+            
+            <!-- Algorithm Select -->
+            <div class="flex flex-col gap-1">
+                <label for="algo" class="text-gray-300">Shader Algorithm</label>
+                <select id="algo" class="bg-white/10 border border-white/20 rounded-lg p-2 outline-none focus:border-[#BCF600] transition text-xs">
+                    <option value="1" class="bg-gray-800">1. Original (Rigid, Tearing)</option>
+                    <option value="2" class="bg-gray-800">2. Soft Warp (Blurry Edges)</option>
+                    <option value="3" class="bg-gray-800">3. 2-Step Relief (Sharp but Ghosting)</option>
+                    <option value="4" selected class="bg-gray-800">4. Iterative Parallax (Perfect Match)</option>
+                    <option value="5" class="bg-gray-800">5. Raymarch POM (True stepping)</option>
+                    <option value="6" class="bg-gray-800">6. Max-Depth Gathering (Occlusion)</option>
+                </select>
+            </div>
+
+            <!-- Intensity Slider -->
+            <div class="flex flex-col gap-1">
+                <div class="flex justify-between items-center">
+                    <label for="intensity" class="text-gray-300">Max Offset Intensity</label>
+                    <span id="intensityVal" class="text-xs text-[#BCF600]">0.05</span>
+                </div>
+                <input type="range" id="intensity" min="0" max="0.2" step="0.005" value="0.05" class="w-full accent-[#BCF600]">
+            </div>
+
+            <!-- Focal Plane Slider -->
+            <div class="flex flex-col gap-1">
+                <div class="flex justify-between items-center">
+                    <label for="focusPlane" class="text-gray-300">Focal Plane (Static Layer)</label>
+                    <span id="focusPlaneVal" class="text-xs text-[#BCF600]">0.5</span>
+                </div>
+                <!-- 0.0 = Background static, 1.0 = Foreground static -->
+                <input type="range" id="focusPlane" min="0" max="1.0" step="0.05" value="0.5" class="w-full accent-[#BCF600]">
+                <span class="text-[10px] text-gray-500">0=Static BG, 1=Static FG</span>
+            </div>
+
+            <!-- Zoom Slider -->
+            <div class="flex flex-col gap-1">
+                <div class="flex justify-between items-center">
+                    <label for="zoom" class="text-gray-300">Zoom Level</label>
+                    <span id="zoomVal" class="text-xs text-[#BCF600]">0.95</span>
+                </div>
+                <!-- Note: Zoom is inverted in shader (0.95 means zoom in by 5%). Max 1.0 = no zoom -->
+                <input type="range" id="zoom" min="0.8" max="1.0" step="0.01" value="0.95" class="w-full accent-[#BCF600]">
+            </div>
+
+            <!-- Iterations Slider -->
+            <div class="flex flex-col gap-1" id="iterContainer">
+                <div class="flex justify-between items-center">
+                    <label for="iterations" class="text-gray-300">Iterations (Algo 4 only)</label>
+                    <span id="iterationsVal" class="text-xs text-[#BCF600]">6</span>
+                </div>
+                <input type="range" id="iterations" min="1" max="15" step="1" value="6" class="w-full accent-[#BCF600]">
+            </div>
+
+            <!-- Chromatic Aberration -->
+            <div class="flex flex-col gap-1">
+                <div class="flex justify-between items-center">
+                    <label for="aberration" class="text-gray-300">Chromatic Aberration</label>
+                    <span id="aberrationVal" class="text-xs text-[#BCF600]">0.0</span>
+                </div>
+                <input type="range" id="aberration" min="0" max="0.02" step="0.001" value="0.0" class="w-full accent-[#BCF600]">
+            </div>
+
+            <!-- Soft Limits Edge Easing -->
+            <div class="flex items-center justify-between mt-2">
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="softLimits" checked class="w-4 h-4 accent-[#BCF600] rounded">
+                    <label for="softLimits" class="text-gray-300 cursor-pointer">Soft Limits</label>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="debugDepth" class="w-4 h-4 accent-red-500 rounded">
+                    <label for="debugDepth" class="text-red-400 font-bold cursor-pointer">Debug Depth</label>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="invertMouse" class="w-4 h-4 accent-[#BCF600] rounded">
+                <label for="invertMouse" class="text-gray-300 cursor-pointer">Invert Mouse/Gyro</label>
+            </div>
+
+            <hr class="border-white/10 my-1">
+
+            <!-- File Uploads -->
+            <div class="flex flex-col gap-2">
+                <label class="text-gray-300">Test Custom Images</label>
+                <div class="flex gap-2">
+                    <button id="uploadColorBtn" class="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded p-2 transition text-xs">Color Map</button>
+                    <button id="uploadDepthBtn" class="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded p-2 transition text-xs">Depth Map</button>
+                </div>
+                <input type="file" id="colorInput" accept="image/*" hidden>
+                <input type="file" id="depthInput" accept="image/*" hidden>
+                <button id="resetImagesBtn" class="w-full text-xs text-gray-500 hover:text-white transition mt-1">Reset to Defaults</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="Parallax.js"></script>
+</body>
+</html>

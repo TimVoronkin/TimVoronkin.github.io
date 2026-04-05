@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liquid Glass Playground</title>
+    <link rel="icon" href="../imgs/favicon.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #111;
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+            user-select: none;
+        }
+        .bg-layer {
+            position: fixed; inset: 0;
+            background-image: url('../imgs/bg_img.jpg');
+            background-size: cover; background-position: center;
+            z-index: -10;
+        }
+
+        /* ── Hidden SVG ── */
+        #svg-defs { position: absolute; width: 0; height: 0; }
+
+        /* ════════════════════════════════════════
+           VARIANT BASE STYLES (css only)
+           backdrop-filter is overwritten by JS
+        ════════════════════════════════════════ */
+        .glass-elem {
+            border-radius: 48px;
+            cursor: move;
+            transition: border-radius 0.4s ease;
+        }
+
+        /* A: Frosted Noise */
+        .va {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-top-color: rgba(255,255,255,0.45);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+        /* B: Bevel Refraction */
+        .vb {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-top-color: rgba(255,255,255,0.5);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.4),
+                        inset 0 1px 0 rgba(255,255,255,0.35),
+                        inset 0 -1px 0 rgba(0,0,0,0.25);
+        }
+        /* C: Apple */
+        .vc {
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.25);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.35),
+                        inset 0 1px 0 rgba(255,255,255,0.6),
+                        inset 0 -1px 0 rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .vc::before {
+            content: '';
+            position: absolute; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+            background-size: 128px 128px;
+            mix-blend-mode: overlay;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .vc::after {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 40%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.22), transparent);
+            pointer-events: none;
+        }
+        /* D: Gooey */
+        .vd {
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5),
+                        inset 0 2px 0 rgba(255,255,255,0.4);
+        }
+
+        /* ── Preview Panel ── */
+        #preview-panel {
+            width: 460px;
+            padding: 3rem 2.5rem;
+            display: flex; flex-direction: column; align-items: center; gap: 2rem;
+        }
+        #preview-panel h1 { font-size: 1.8rem; font-weight: 700; color: #fff; letter-spacing: -0.03em; text-align: center; }
+        #preview-panel p  { font-size: 0.85rem; color: rgba(255,255,255,0.65); text-align: center; line-height: 1.6; }
+
+        /* ── Preview Button ── */
+        #preview-btn {
+            padding: 1rem 2.5rem;
+            border: none; cursor: pointer;
+            font: 600 0.95rem 'Inter', sans-serif;
+            color: #fff;
+            width: 100%; max-width: 260px;
+            border-radius: 100px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #preview-btn:hover { transform: translateY(-3px) scale(1.04); }
+
+        /* ── Controls Panel ── */
+        #controls {
+            position: fixed; top: 20px; right: 20px;
+            width: 300px;
+            background: #151515;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 18px;
+            z-index: 100;
+            max-height: 92vh;
+            display: flex; flex-direction: column;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+            overflow: hidden;
+        }
+        #drag-handle {
+            padding: 0.85rem 1.1rem;
+            background: rgba(255,255,255,0.04);
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            cursor: grab;
+            display: flex; align-items: center; justify-content: space-between;
+            flex-shrink: 0;
+        }
+        #drag-handle:active { cursor: grabbing; }
+        #drag-handle h2 { color: #BCF600; font-size: 0.95rem; font-weight: 700; }
+        .drag-hint { font-size: 9px; color: rgba(255,255,255,0.25); }
+
+        .ctrl-body {
+            padding: 0.9rem 1.1rem;
+            overflow-y: auto; flex: 1;
+            display: flex; flex-direction: column; gap: 0.75rem;
+        }
+        .ctrl-body::-webkit-scrollbar { width: 5px; }
+        .ctrl-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+
+        /* ── Form Controls ── */
+        .section-title {
+            font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em;
+            text-transform: uppercase; color: rgba(255,255,255,0.3);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding-bottom: 4px; margin-top: 4px;
+        }
+        .ctrl-row { display: flex; flex-direction: column; gap: 3px; }
+        .ctrl-label { display: flex; justify-content: space-between; font-size: 0.74rem; color: rgba(255,255,255,0.55); }
+        .ctrl-label span { color: #BCF600; font-variant-numeric: tabular-nums; }
+        input[type="range"] { width: 100%; accent-color: #BCF600; height: 4px; }
+        select {
+            width: 100%;
+            background: #222; color: #fff;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 8px;
+            padding: 0.45rem 0.7rem;
+            font-size: 0.78rem; font-family: 'Inter', sans-serif;
+            outline: none; cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        select option { background: #1a1a1a; color: #fff; padding: 4px; }
+
+        .note {
+            font-size: 0.67rem; color: rgba(255,255,255,0.28);
+            line-height: 1.5;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 8px;
+            padding: 6px 10px;
+        }
+        .note strong { color: #BCF600; }
+        hr { border: none; border-top: 1px solid rgba(255,255,255,0.06); }
+        .ctrl-section { display: flex; flex-direction: column; gap: 0.65rem; }
+    </style>
+</head>
+<body>
+
+<div class="bg-layer"></div>
+
+<!-- SVG Filter Definitions — живуть в окремому прихованому елементі -->
+<svg id="svg-defs" aria-hidden="true">
+    <!-- ═══════════════════════════════════════════════════════
+         FILTER A: Frosted Noise
+         feTurbulence → feGaussianBlur → feDisplacementMap
+    ═══════════════════════════════════════════════════════ -->
+    <filter id="filter-a" x="-10%" y="-10%" width="120%" height="120%">
+        <feTurbulence id="fa-turb" type="fractalNoise" baseFrequency="0.02" numOctaves="1" seed="2" result="noise"/>
+        <feGaussianBlur id="fa-blur" in="noise" stdDeviation="8" result="sNoise"/>
+        <feDisplacementMap id="fa-disp" in="SourceGraphic" in2="sNoise" scale="25" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <!-- ═══════════════════════════════════════════════════════
+         FILTER B: Bevel Edge Refraction via SourceAlpha morphology
+         Ідея @hashintel/refractive: dilate alpha, erode alpha,
+         subtract → тонке кільце країв → blur → displacement
+    ═══════════════════════════════════════════════════════ -->
+    <filter id="filter-b" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
+        <!-- Отримати кільце по краях через різницю erode/dilate -->
+        <feMorphology id="fb-erode"  in="SourceAlpha" operator="erode"  radius="10" result="eroded"/>
+        <feMorphology id="fb-dilate" in="SourceAlpha" operator="dilate" radius="10" result="dilated"/>
+        <feComposite in="dilated" in2="eroded" operator="out" result="edgeRing"/>
+        <!-- Blur ring для плавного градієнта -->
+        <feGaussianBlur id="fb-gblur" in="edgeRing" stdDeviation="10" result="edgeBlurred"/>
+        <!-- Підсвітлення — опційно накладаємо ring як specular маску -->
+        <feColorMatrix id="fb-cm" in="edgeBlurred" type="matrix"
+            values="1 0 0 0 0
+                    1 0 0 0 0
+                    1 0 0 0 0
+                    0 0 0 4 0"
+            result="brightRing"/>
+        <!-- Displacement: SourceGraphic + кільце -->
+        <feDisplacementMap id="fb-disp" in="SourceGraphic" in2="brightRing"
+            scale="80" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <!-- ═══════════════════════════════════════════════════════
+         FILTER D: Gooey / Liquid
+    ═══════════════════════════════════════════════════════ -->
+    <filter id="filter-d" x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence id="fd-turb" type="turbulence" baseFrequency="0.012" numOctaves="2" seed="5" result="noise"/>
+        <feGaussianBlur id="fd-blur" in="noise" stdDeviation="12" result="sNoise"/>
+        <feDisplacementMap id="fd-disp" in="SourceGraphic" in2="sNoise" scale="50" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+</svg>
+
+<!-- ═════════════════════ PREVIEW ═════════════════════ -->
+<div id="preview-panel" class="glass-elem va">
+    <div>
+        <h1 id="v-title">Frosted Noise Glass</h1>
+        <p id="v-desc" style="margin-top:0.6rem">Ефект матованого скла зі стохастичним викривленням. Шум розподілений рівномірно по всій поверхні.</p>
+    </div>
+    <button id="preview-btn" class="glass-elem va">Hover Me</button>
+</div>
+
+<!-- ═════════════════════ CONTROLS ═════════════════════ -->
+<div id="controls">
+    <div id="drag-handle">
+        <h2>🧊 Glass Tweaker</h2>
+        <span class="drag-hint">⠿ перетягни</span>
+    </div>
+    <div class="ctrl-body">
+
+        <!-- Variant select -->
+        <div class="ctrl-section">
+            <span class="section-title">Тип скла</span>
+            <select id="variantSelect">
+                <option value="a">A — Frosted Noise (шум на поверхні)</option>
+                <option value="b">B — Bevel Edge Refraction (лінза по краях)</option>
+                <option value="c">C — Apple Glassmorphism (чисте CSS)</option>
+                <option value="d">D — Gooey Liquid Blob (рідинний натяг)</option>
+            </select>
+            <p id="vn-a" class="note">Стандартний "матовий" ефект. SVG-шум рівномірно викривляє фон позаду. Найпростіший і найпопулярніший варіант.</p>
+            <p id="vn-b" class="note" style="display:none"><strong>⭐ Найреалістичніший.</strong> Реалізує принцип @hashintel/refractive. Тільки КРАЇ елемента заломлюють, центр — прозорий. Radius = товщина фаски. Великий radius = крапля, малий = кришталь.</p>
+            <p id="vn-c" class="note" style="display:none">Чисте CSS без SVG. Blur + Saturate + grain-зерно (через псевдоелемент) + відблиск. Найкраща сумісність з усіма браузерами та пристроями.</p>
+            <p id="vn-d" class="note" style="display:none">Рідинна поверхня з ефектом поверхневого натягу. Агресивний turbulence + великий displacement = желе або крапля ртуті.</p>
+        </div>
+
+        <hr>
+
+        <!-- ─── Controls A ─── -->
+        <div class="ctrl-section" id="ca">
+            <span class="section-title">SVG шар — Frosted Noise</span>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Frequency (розмір патерну) <span id="la-freq">0.02</span></label>
+                <input type="range" id="a-freq" min="0.002" max="0.12" step="0.002" value="0.02">
+            </div>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Octaves (деталізація) <span id="la-oct">1</span></label>
+                <input type="range" id="a-oct" min="1" max="5" step="1" value="1">
+            </div>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Noise Blur (згладжування) <span id="la-nblur">8</span></label>
+                <input type="range" id="a-nblur" min="0" max="30" step="1" value="8">
+            </div>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Displacement Scale <span id="la-disp">25</span></label>
+                <input type="range" id="a-disp" min="0" max="120" step="2" value="25">
+            </div>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Seed (форма патерну) <span id="la-seed">2</span></label>
+                <input type="range" id="a-seed" min="0" max="20" step="1" value="2">
+            </div>
+            <hr>
+            <span class="section-title">CSS шар</span>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Backdrop Blur <span id="la-blur">6</span>px</label>
+                <input type="range" id="a-blur" min="0" max="30" step="1" value="6">
+            </div>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Saturate <span id="la-sat">140</span>%</label>
+                <input type="range" id="a-sat" min="100" max="300" step="10" value="140">
+            </div>
+        </div>
+
+        <!-- ─── Controls B ─── -->
+        <div class="ctrl-section" id="cb" style="display:none">
+            <span class="section-title">Bevel Edge Refraction</span>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Bevel Width px <span id="lb-rad">10</span></label>
+                <input type="range" id="b-rad" min="1" max="60" step="1" value="10">
+            </div>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Bevel Softness (blur) <span id="lb-soft">10</span></label>
+                <input type="range" id="b-soft" min="0" max="50" step="1" value="10">
+            </div>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Refraction Scale <span id="lb-disp">80</span></label>
+                <input type="range" id="b-disp" min="0" max="300" step="5" value="80">
+            </div>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Amplify (контрастність кільця) <span id="lb-amp">4</span></label>
+                <input type="range" id="b-amp" min="0.5" max="20" step="0.5" value="4">
+            </div>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Backdrop Blur <span id="lb-blur">3</span>px</label>
+                <input type="range" id="b-blur" min="0" max="20" step="1" value="3">
+            </div>
+        </div>
+
+        <!-- ─── Controls C ─── -->
+        <div class="ctrl-section" id="cc" style="display:none">
+            <span class="section-title">Apple CSS Glassmorphism</span>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Backdrop Blur <span id="lc-blur">20</span>px</label>
+                <input type="range" id="c-blur" min="4" max="40" step="1" value="20">
+            </div>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Saturate <span id="lc-sat">180</span>%</label>
+                <input type="range" id="c-sat" min="100" max="350" step="10" value="180">
+            </div>
+            <div class="ctrl-row">
+                <label class="ctrl-label">White Fill Opacity <span id="lc-op">0.12</span></label>
+                <input type="range" id="c-op" min="0" max="0.6" step="0.01" value="0.12">
+            </div>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Border Opacity <span id="lc-border">0.25</span></label>
+                <input type="range" id="c-border" min="0" max="0.8" step="0.01" value="0.25">
+            </div>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Grain Opacity <span id="lc-grain">0.5</span></label>
+                <input type="range" id="c-grain" min="0" max="1.5" step="0.05" value="0.5">
+            </div>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Top Highlight <span id="lc-hi">0.22</span></label>
+                <input type="range" id="c-hi" min="0" max="0.7" step="0.02" value="0.22">
+            </div>
+        </div>
+
+        <!-- ─── Controls D ─── -->
+        <div class="ctrl-section" id="cd" style="display:none">
+            <span class="section-title">Gooey Blob / Liquid</span>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Turbulence Freq <span id="ld-freq">0.012</span></label>
+                <input type="range" id="d-freq" min="0.001" max="0.08" step="0.001" value="0.012">
+            </div>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Octaves <span id="ld-oct">2</span></label>
+                <input type="range" id="d-oct" min="1" max="5" step="1" value="2">
+            </div>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Noise Blur <span id="ld-nblur">12</span></label>
+                <input type="range" id="d-nblur" min="0" max="40" step="1" value="12">
+            </div>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Displacement Scale <span id="ld-disp">50</span></label>
+                <input type="range" id="d-disp" min="5" max="200" step="5" value="50">
+            </div>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Backdrop Blur <span id="ld-blur">2</span>px</label>
+                <input type="range" id="d-blur" min="0" max="15" step="1" value="2">
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- Shared -->
+        <div class="ctrl-section">
+            <span class="section-title">Спільне</span>
+            <div class="ctrl-row">
+                <label class="ctrl-label">Border Radius <span id="l-radius">48</span>px</label>
+                <input type="range" id="s-radius" min="0" max="120" step="4" value="48">
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+// ── State ──
+const panel = document.getElementById('preview-panel');
+const btn   = document.getElementById('preview-btn');
+let cur = 'a';
+
+// ── Metadata ──
+const meta = {
+    a: { title: 'Frosted Noise Glass', desc: 'Ефект матованого скла. SVG-шум рівномірно викривляє фон по всій поверхні.' },
+    b: { title: 'Bevel Edge Refraction', desc: 'Заломлення лише по краях (фаска). Центр прозорий. Принцип @hashintel/refractive без React.' },
+    c: { title: 'Apple Glassmorphism', desc: 'Чисте CSS: blur + saturate + grain + відблиск. Без SVG-фільтрів.' },
+    d: { title: 'Gooey Liquid Blob', desc: 'Рідинна поверхня з ефектом поверхневого натягу. Agressive turbulence + великий зсув.' },
+};
+
+// ── Variant switch ──
+function setVariant(v) {
+    cur = v;
+    ['a','b','c','d'].forEach(k => {
+        panel.classList.remove('v'+k);
+        btn.classList.remove('v'+k);
+        document.getElementById('c'+k).style.display = 'none';
+        document.getElementById('vn-'+k).style.display = 'none';
+    });
+    panel.classList.add('v'+v);
+    btn.classList.add('v'+v);
+    document.getElementById('c'+v).style.display = 'flex';
+    document.getElementById('vn-'+v).style.display = 'block';
+    document.getElementById('v-title').textContent = meta[v].title;
+    document.getElementById('v-desc').textContent  = meta[v].desc;
+    apply();
+}
+
+// ══════════════════════════════════════
+//  APPLY FUNCTIONS — кожен слайдер
+//  реально бере з DOM і пише в SVG + CSS
+// ══════════════════════════════════════
+
+function applyA() {
+    const freq    = document.getElementById('a-freq').value;
+    const oct     = document.getElementById('a-oct').value;
+    const nblur   = document.getElementById('a-nblur').value;
+    const disp    = document.getElementById('a-disp').value;
+    const seed    = document.getElementById('a-seed').value;
+    const cssBlur = document.getElementById('a-blur').value;
+    const sat     = document.getElementById('a-sat').value;
+
+    document.getElementById('la-freq').textContent = freq;
+    document.getElementById('la-oct').textContent  = oct;
+    document.getElementById('la-nblur').textContent= nblur;
+    document.getElementById('la-disp').textContent = disp;
+    document.getElementById('la-seed').textContent = seed;
+    document.getElementById('la-blur').textContent = cssBlur;
+    document.getElementById('la-sat').textContent  = sat;
+
+    // Write to SVG nodes
+    const turb = document.getElementById('fa-turb');
+    turb.setAttribute('baseFrequency', freq);
+    turb.setAttribute('numOctaves', oct);
+    turb.setAttribute('seed', seed);
+    document.getElementById('fa-blur').setAttribute('stdDeviation', nblur);
+    document.getElementById('fa-disp').setAttribute('scale', disp);
+
+    // CSS backdrop-filter — BOTH elements
+    const bf = `blur(${cssBlur}px) saturate(${sat}%) url(#filter-a)`;
+    panel.style.backdropFilter = bf;
+    panel.style.webkitBackdropFilter = bf;
+    btn.style.backdropFilter = bf;
+    btn.style.webkitBackdropFilter = bf;
+}
+
+function applyB() {
+    const rad   = document.getElementById('b-rad').value;
+    const soft  = document.getElementById('b-soft').value;
+    const disp  = document.getElementById('b-disp').value;
+    const amp   = document.getElementById('b-amp').value;
+    const blur  = document.getElementById('b-blur').value;
+
+    document.getElementById('lb-rad').textContent  = rad;
+    document.getElementById('lb-soft').textContent = soft;
+    document.getElementById('lb-disp').textContent = disp;
+    document.getElementById('lb-amp').textContent  = amp;
+    document.getElementById('lb-blur').textContent = blur;
+
+    // Update erode/dilate radius
+    document.getElementById('fb-erode').setAttribute('radius', rad);
+    document.getElementById('fb-dilate').setAttribute('radius', rad);
+    // Update blur softness
+    document.getElementById('fb-gblur').setAttribute('stdDeviation', soft);
+    // Update amplify
+    document.getElementById('fb-cm').setAttribute('values',
+        `1 0 0 0 0  1 0 0 0 0  1 0 0 0 0  0 0 0 ${amp} 0`);
+    // Update displacement
+    document.getElementById('fb-disp').setAttribute('scale', disp);
+
+    const bf = `url(#filter-b) blur(${blur}px)`;
+    panel.style.backdropFilter = bf;
+    panel.style.webkitBackdropFilter = bf;
+    btn.style.backdropFilter = bf;
+    btn.style.webkitBackdropFilter = bf;
+}
+
+function applyC() {
+    const blur   = document.getElementById('c-blur').value;
+    const sat    = document.getElementById('c-sat').value;
+    const op     = document.getElementById('c-op').value;
+    const border = document.getElementById('c-border').value;
+    const grain  = document.getElementById('c-grain').value;
+    const hi     = document.getElementById('c-hi').value;
+
+    document.getElementById('lc-blur').textContent   = blur;
+    document.getElementById('lc-sat').textContent    = sat;
+    document.getElementById('lc-op').textContent     = op;
+    document.getElementById('lc-border').textContent = border;
+    document.getElementById('lc-grain').textContent  = grain;
+    document.getElementById('lc-hi').textContent     = hi;
+
+    const bf = `blur(${blur}px) saturate(${sat}%) brightness(1.05)`;
+    [panel, btn].forEach(el => {
+        el.style.backdropFilter = bf;
+        el.style.webkitBackdropFilter = bf;
+        el.style.background = `rgba(255,255,255,${op})`;
+        el.style.borderColor = `rgba(255,255,255,${border})`;
+        // grain and highlight via CSS vars (for ::before / ::after)
+        el.style.setProperty('--grain', grain);
+        el.style.setProperty('--hi', hi);
+    });
+
+    // Update pseudo-element opacity via injected style tag
+    let st = document.getElementById('c-style');
+    if (!st) { st = document.createElement('style'); st.id = 'c-style'; document.head.appendChild(st); }
+    st.textContent = `
+        .vc::before { opacity: ${grain}; }
+        .vc::after  { background: linear-gradient(to bottom, rgba(255,255,255,${hi}), transparent); }
+    `;
+}
+
+function applyD() {
+    const freq  = document.getElementById('d-freq').value;
+    const oct   = document.getElementById('d-oct').value;
+    const nblur = document.getElementById('d-nblur').value;
+    const disp  = document.getElementById('d-disp').value;
+    const blur  = document.getElementById('d-blur').value;
+
+    document.getElementById('ld-freq').textContent  = freq;
+    document.getElementById('ld-oct').textContent   = oct;
+    document.getElementById('ld-nblur').textContent = nblur;
+    document.getElementById('ld-disp').textContent  = disp;
+    document.getElementById('ld-blur').textContent  = blur;
+
+    const turb = document.getElementById('fd-turb');
+    turb.setAttribute('baseFrequency', freq);
+    turb.setAttribute('numOctaves', oct);
+    document.getElementById('fd-blur').setAttribute('stdDeviation', nblur);
+    document.getElementById('fd-disp').setAttribute('scale', disp);
+
+    const bf = `url(#filter-d) blur(${blur}px)`;
+    panel.style.backdropFilter = bf;
+    panel.style.webkitBackdropFilter = bf;
+    btn.style.backdropFilter = bf;
+    btn.style.webkitBackdropFilter = bf;
+}
+
+function apply() {
+    if (cur === 'a') applyA();
+    else if (cur === 'b') applyB();
+    else if (cur === 'c') applyC();
+    else if (cur === 'd') applyD();
+}
+
+// ── Radius ──
+document.getElementById('s-radius').addEventListener('input', e => {
+    const r = e.target.value + 'px';
+    document.getElementById('l-radius').textContent = e.target.value;
+    panel.style.borderRadius = r;
+    // btn keeps pill shape
+});
+
+// ── Universal input handler ──
+document.querySelectorAll('input[type="range"]').forEach(el => {
+    el.addEventListener('input', apply);
+});
+document.getElementById('variantSelect').addEventListener('change', e => {
+    setVariant(e.target.value);
+});
+
+// ══════════════════════════════════════
+//  DRAGGABLE — Controls panel
+// ══════════════════════════════════════
+const controls = document.getElementById('controls');
+const dragHandle = document.getElementById('drag-handle');
+let ctrlDrag = false, cx0 = 0, cy0 = 0, cl0 = 0, ct0 = 0;
+
+dragHandle.addEventListener('mousedown', e => {
+    const r = controls.getBoundingClientRect();
+    ctrlDrag = true; cx0 = e.clientX; cy0 = e.clientY; cl0 = r.left; ct0 = r.top;
+    controls.style.right = 'auto';
+    e.preventDefault();
+});
+
+// ══════════════════════════════════════
+//  DRAGGABLE — Preview glass panel
+// ══════════════════════════════════════
+let panelDrag = false, px0 = 0, py0 = 0, pl0 = 0, pt0 = 0;
+
+function snatchPanel() {
+    if (panel.style.position === 'fixed') return;
+    const r = panel.getBoundingClientRect();
+    panel.style.position = 'fixed';
+    panel.style.left = r.left + 'px';
+    panel.style.top  = r.top  + 'px';
+    panel.style.margin = '0';
+    document.body.style.alignItems = 'flex-start';
+    document.body.style.justifyContent = 'flex-start';
+}
+
+panel.addEventListener('mousedown', e => {
+    if (e.target === btn || btn.contains(e.target)) return;
+    snatchPanel();
+    const r = panel.getBoundingClientRect();
+    panelDrag = true; px0 = e.clientX; py0 = e.clientY; pl0 = r.left; pt0 = r.top;
+    panel.style.cursor = 'grabbing';
+    e.preventDefault();
+});
+
+window.addEventListener('mousemove', e => {
+    if (ctrlDrag) {
+        const l = Math.max(0, Math.min(window.innerWidth  - controls.offsetWidth,  cl0 + e.clientX - cx0));
+        const t = Math.max(0, Math.min(window.innerHeight - controls.offsetHeight, ct0 + e.clientY - cy0));
+        controls.style.left = l + 'px';
+        controls.style.top  = t + 'px';
+    }
+    if (panelDrag) {
+        const l = Math.max(0, Math.min(window.innerWidth  - panel.offsetWidth,  pl0 + e.clientX - px0));
+        const t = Math.max(0, Math.min(window.innerHeight - panel.offsetHeight, pt0 + e.clientY - py0));
+        panel.style.left = l + 'px';
+        panel.style.top  = t + 'px';
+    }
+});
+
+window.addEventListener('mouseup', () => {
+    ctrlDrag = false; panelDrag = false;
+    panel.style.cursor = 'move';
+});
+
+// ── Init ──
+setVariant('a');
+</script>
+</body>
+</html>

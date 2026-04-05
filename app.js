@@ -26,14 +26,23 @@ const fsSource = `
             min((u_resolution.y / u_resolution.x) / (u_imageSize.y / u_imageSize.x), 1.0)
         );
         vec2 uv = v_texCoord * ratio + (1.0 - ratio) * 0.5;
-
-        float depth = texture2D(u_depthMap, uv).r;
-        vec2 parallax = u_mouse * (depth - 0.5) * 0.05;
         
-        // Add a slight zoom to prevent tearing on edges during parallax
-        uv = uv * 0.95 + 0.025; 
+        // Зум 0.8 (щоб сховати краї при сильному кадруванні)
+        uv = uv * 0.8 + 0.1; 
 
-        gl_FragColor = texture2D(u_image, uv + parallax);
+        // Ітеративний паралакс (Fixed-Point Iteration)
+        vec2 p = uv;
+        vec2 max_offset = u_mouse * 0.04; // Інтенсивність 0.04
+
+        // 15 кроків для максимальної якості фіксації текстури
+        for (int i = 0; i < 15; i++) {
+            float d = texture2D(u_depthMap, p).r;
+            // Focal Plane = 1 (Передній план залишається повністю статичним, задні шари "пливуть")
+            vec2 target_p = uv + max_offset * (d - 1.0);
+            p = mix(p, target_p, 0.6); 
+        }
+
+        gl_FragColor = texture2D(u_image, p);
     }
 `;
 
@@ -102,25 +111,80 @@ let mouseX = 0, mouseY = 0;
 let targetX = 0, targetY = 0;
 let hasGyro = false;
 
+function getOrientation() {
+    return (screen.orientation || {}).angle || window.orientation || 0;
+}
+
 window.addEventListener('deviceorientation', (e) => {
     if (e.gamma !== null && e.beta !== null) {
-        // High sensitivity for mobile tilts
-        let x = e.gamma / 25.0;
-        let y = (e.beta - 45.0) / 25.0; // Assume 45 deg as neutral holding pos
-        x = Math.max(-1.5, Math.min(1.5, x));
-        y = Math.max(-1.5, Math.min(1.5, y));
+        let x = 0;
+        let y = 0;
 
-        targetX = x * 3.0;
-        targetY = y * 3.0;
+        // Handle tablet/phone landscape orientation swapping axes
+        const angle = getOrientation();
+        if (angle === 90) {
+            x = e.beta;
+            y = -e.gamma - 45.0;
+        } else if (angle === -90 || angle === 270) {
+            x = -e.beta;
+            y = e.gamma - 45.0;
+        } else if (angle === 180) {
+            x = -e.gamma;
+            y = -e.beta - 45.0;
+        } else {
+            // Portrait (0)
+            x = e.gamma;
+            y = e.beta - 45.0; // Assume 45 deg as neutral holding pos
+        }
+        
+        x = x / 25.0;
+        y = y / 25.0;
+
+        // Плавне обмеження (Soft Clipping) для гіроскопа
+        // Math.tanh плавно гасить значення при сильних нахилах, не даючи йому перевищити задану межу
+        targetX = Math.tanh(x) * 2.0;
+        targetY = Math.tanh(y) * 2.0;
         hasGyro = true;
     }
 }, true);
 
+// Функція плавного уповільнення на краях екрану (Quadratic Ease Out)
+function smoothEdge(val) {
+    let abs = Math.min(Math.abs(val), 1.0);
+    let smoothed = 1.0 - Math.pow(1.0 - abs, 2.0);
+    return Math.sign(val) * smoothed;
+}
+
 window.addEventListener('mousemove', (e) => {
     if (hasGyro) return;
-    targetX = (e.clientX / window.innerWidth - 0.5) * 2.0;
-    targetY = -(e.clientY / window.innerHeight - 0.5) * 2.0;
+    let rawX = (e.clientX / window.innerWidth - 0.5) * 2.0;
+    let rawY = -(e.clientY / window.innerHeight - 0.5) * 2.0;
+    // Множник 1.5 задає загальну інтенсивність, але на краях рух плавно зупиниться
+    targetX = smoothEdge(rawX) * 1.5;
+    targetY = smoothEdge(rawY) * 1.5;
 });
+
+// Fallback for iOS/Touch devices where gyro is blocked by permissions
+window.addEventListener('touchmove', (e) => {
+    if (hasGyro) return;
+    let rawX = (e.touches[0].clientX / window.innerWidth - 0.5) * 2.0;
+    let rawY = -(e.touches[0].clientY / window.innerHeight - 0.5) * 2.0;
+    targetX = smoothEdge(rawX) * 1.5;
+    targetY = smoothEdge(rawY) * 1.5;
+}, {passive: true});
+
+// Запрос дозволу для гіроскопа на iOS 13+ після першого дотику до екрану
+document.body.addEventListener('click', () => {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+            .then(permissionState => {
+                if (permissionState === 'granted') {
+                    console.log('Gyro permission granted');
+                }
+            })
+            .catch(console.error);
+    }
+}, { once: true });
 
 function resize() {
     canvas.width = window.innerWidth;

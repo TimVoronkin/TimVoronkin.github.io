@@ -104,13 +104,14 @@ let hasGyro = false;
 
 window.addEventListener('deviceorientation', (e) => {
     if (e.gamma !== null && e.beta !== null) {
-        let x = e.gamma / 45.0; 
-        let y = (e.beta - 45.0) / 45.0;
-        x = Math.max(-1, Math.min(1, x));
-        y = Math.max(-1, Math.min(1, y));
+        // High sensitivity for mobile tilts
+        let x = e.gamma / 25.0; 
+        let y = (e.beta - 45.0) / 25.0; // Assume 45 deg as neutral holding pos
+        x = Math.max(-1.5, Math.min(1.5, x));
+        y = Math.max(-1.5, Math.min(1.5, y));
 
-        targetX = x * 2.0;
-        targetY = y * 2.0;
+        targetX = x * 3.0; 
+        targetY = y * 3.0;
         hasGyro = true;
     }
 }, true);

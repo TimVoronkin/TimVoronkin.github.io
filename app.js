@@ -53,8 +53,8 @@ gl.useProgram(program);
 const positionBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-    -1, -1,  1, -1, -1,  1,
-    -1,  1,  1, -1,  1,  1
+    -1, -1, 1, -1, -1, 1,
+    -1, 1, 1, -1, 1, 1
 ]), gl.STATIC_DRAW);
 
 const positionLoc = gl.getAttribLocation(program, "a_position");
@@ -67,8 +67,8 @@ function loadTexture(url, unit, isMain) {
     const texture = gl.createTexture();
     gl.activeTexture(gl.TEXTURE0 + unit);
     gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0,0,0,0]));
-    
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
+
     const image = new Image();
     image.src = url;
     image.onload = () => {
@@ -86,8 +86,8 @@ function loadTexture(url, unit, isMain) {
     };
 }
 
-loadTexture('imgs/bg_img.png', 0, true);
-loadTexture('imgs/bg_depth.png', 1, false);
+loadTexture('imgs/bg_img.jpg', 0, true);
+loadTexture('imgs/bg_depth.jpg', 1, false);
 
 const imageUnif = gl.getUniformLocation(program, "u_image");
 const depthUnif = gl.getUniformLocation(program, "u_depthMap");
@@ -105,12 +105,12 @@ let hasGyro = false;
 window.addEventListener('deviceorientation', (e) => {
     if (e.gamma !== null && e.beta !== null) {
         // High sensitivity for mobile tilts
-        let x = e.gamma / 25.0; 
+        let x = e.gamma / 25.0;
         let y = (e.beta - 45.0) / 25.0; // Assume 45 deg as neutral holding pos
         x = Math.max(-1.5, Math.min(1.5, x));
         y = Math.max(-1.5, Math.min(1.5, y));
 
-        targetX = x * 3.0; 
+        targetX = x * 3.0;
         targetY = y * 3.0;
         hasGyro = true;
     }

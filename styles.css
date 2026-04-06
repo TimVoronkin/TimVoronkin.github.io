@@ -70,7 +70,8 @@ body {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2), 0 0 15px rgba(225, 48, 108, 0.5);
 }
 
-.link-btn.instagram:hover .link-icon {
+.link-btn.instagram:hover .link-icon,
+.link-btn.instagram:hover span {
     color: #E1306C !important;
 }
 
@@ -79,7 +80,8 @@ body {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2), 0 0 15px rgba(19, 175, 240, 0.5);
 }
 
-.link-btn.artstation:hover .link-icon {
+.link-btn.artstation:hover .link-icon,
+.link-btn.artstation:hover span {
     color: #13AFF0 !important;
 }
 
@@ -88,7 +90,8 @@ body {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2), 0 0 15px rgba(38, 165, 228, 0.5);
 }
 
-.link-btn.telegram:hover .link-icon {
+.link-btn.telegram:hover .link-icon,
+.link-btn.telegram:hover span {
     color: #26A5E4 !important;
 }
 
@@ -97,7 +100,8 @@ body {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2), 0 0 15px rgba(0, 119, 181, 0.5);
 }
 
-.link-btn.linkedin:hover .link-icon {
+.link-btn.linkedin:hover .link-icon,
+.link-btn.linkedin:hover span {
     color: #0077b5 !important;
 }
 
@@ -106,7 +110,8 @@ body {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2), 0 0 15px rgba(24, 119, 242, 0.5);
 }
 
-.link-btn.facebook:hover .link-icon {
+.link-btn.facebook:hover .link-icon,
+.link-btn.facebook:hover span {
     color: #1877F2 !important;
 }
 
@@ -115,7 +120,8 @@ body {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2), 0 0 15px rgba(255, 255, 255, 0.5);
 }
 
-.link-btn.twitter:hover .link-icon {
+.link-btn.twitter:hover .link-icon,
+.link-btn.twitter:hover span {
     color: #ffffff !important;
 }
 
@@ -124,7 +130,8 @@ body {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2), 0 0 15px rgba(255, 0, 0, 0.5);
 }
 
-.link-btn.youtube:hover .link-icon {
+.link-btn.youtube:hover .link-icon,
+.link-btn.youtube:hover span {
     color: #FF0000 !important;
 }
 
@@ -133,7 +140,8 @@ body {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2), 0 0 15px rgba(255, 255, 255, 0.5);
 }
 
-.link-btn.github:hover .link-icon {
+.link-btn.github:hover .link-icon,
+.link-btn.github:hover span {
     color: #ffffff !important;
 }
 
@@ -142,7 +150,8 @@ body {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2), 0 0 15px rgba(88, 101, 242, 0.5);
 }
 
-.link-btn.discord:hover .link-icon {
+.link-btn.discord:hover .link-icon,
+.link-btn.discord:hover span {
     color: #5865F2 !important;
 }
 
@@ -151,8 +160,13 @@ body {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2), 0 0 15px rgba(188, 246, 0, 0.5);
 }
 
-.link-btn.email:hover .link-icon {
+.link-btn.email:hover .link-icon,
+.link-btn.email:hover span {
     color: #BCF600 !important;
+}
+
+.link-btn span {
+    transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .link-icon {

@@ -1,6 +1,12 @@
 const canvas = document.getElementById('bg-canvas');
 const gl = canvas.getContext('webgl');
 
+// Chrome Check to apply advanced original glass effect in CSS
+const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+if (isChrome) {
+    document.documentElement.classList.add('is-chrome');
+}
+
 const vsSource = `
     attribute vec2 a_position;
     varying vec2 v_texCoord;
@@ -26,16 +32,16 @@ const fsSource = `
             min((u_resolution.y / u_resolution.x) / (u_imageSize.y / u_imageSize.x), 1.0)
         );
         vec2 uv = v_texCoord * ratio + (1.0 - ratio) * 0.5;
-        
-        // Зум 0.8 (щоб сховати краї при сильному кадруванні)
-        uv = uv * 0.8 + 0.1; 
+
+        // Зум щоб сховати краї при сильному кадруванні
+        uv = uv * 0.85 + 0.075;
 
         // Ітеративний паралакс (Fixed-Point Iteration)
         vec2 p = uv;
         vec2 max_offset = u_mouse * 0.04; // Інтенсивність 0.04
 
-        // 15 кроків для максимальної якості фіксації текстури
-        for (int i = 0; i < 15; i++) {
+        // кроки для максимальної якості фіксації текстури
+        for (int i = 0; i < 8; i++) {
             float d = texture2D(u_depthMap, p).r;
             // Focal Plane = 1 (Передній план залишається повністю статичним, задні шари "пливуть")
             vec2 target_p = uv + max_offset * (d - 1.0);
@@ -136,7 +142,7 @@ window.addEventListener('deviceorientation', (e) => {
             x = e.gamma;
             y = e.beta - 45.0; // Assume 45 deg as neutral holding pos
         }
-        
+
         x = x / 25.0;
         y = y / 25.0;
 
@@ -147,6 +153,8 @@ window.addEventListener('deviceorientation', (e) => {
         hasGyro = true;
     }
 }, true);
+
+// devicemotion fallback removed due to gravity bias issues.
 
 // Функція плавного уповільнення на краях екрану (Quadratic Ease Out)
 function smoothEdge(val) {
@@ -168,27 +176,51 @@ window.addEventListener('mousemove', (e) => {
 window.addEventListener('touchmove', (e) => {
     if (hasGyro) return;
     let rawX = (e.touches[0].clientX / window.innerWidth - 0.5) * 2.0;
-    let rawY = -(e.touches[0].clientY / window.innerHeight - 0.5) * 2.0;
     targetX = smoothEdge(rawX) * 1.5;
-    targetY = smoothEdge(rawY) * 1.5;
-}, {passive: true});
 
-// Запрос дозволу для гіроскопа на iOS 13+ після першого дотику до екрану
-document.body.addEventListener('click', () => {
+    // Якщо сторінка скролиться, Y контролюватиметься скролом. Інакше - пальцем.
+    let maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    if (maxScroll <= 0) {
+        let rawY = -(e.touches[0].clientY / window.innerHeight - 0.5) * 2.0;
+        targetY = smoothEdge(rawY) * 1.5;
+    }
+}, { passive: true });
+
+// Фолбек: прив'язка паралаксу до скролінгу по вертикалі (якщо сенсорів немає взагалі)
+window.addEventListener('scroll', () => {
+    if (hasGyro) return;
+
+    let maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    if (maxScroll <= 0) return;
+
+    let scrollRatio = window.scrollY / maxScroll; // 0 (верх) до 1 (низ)
+    let rawY = (0.5 - scrollRatio) * 2.0; // 1.0 (верх) до -1.0 (низ)
+
+    targetY = smoothEdge(rawY) * 1.5;
+}, { passive: true });
+
+// Запрос дозволів для сенсорів після першого дотику до екрану (для всіх пристроїв, що це підтримують)
+function requestSensorPermissions() {
     if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
         DeviceOrientationEvent.requestPermission()
-            .then(permissionState => {
-                if (permissionState === 'granted') {
-                    console.log('Gyro permission granted');
-                }
-            })
+            .then(state => { if (state === 'granted') console.log('Gyro permission granted'); })
             .catch(console.error);
     }
-}, { once: true });
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+        DeviceMotionEvent.requestPermission()
+            .then(state => { if (state === 'granted') console.log('Motion permission granted'); })
+            .catch(console.error);
+    }
+}
+document.body.addEventListener('click', requestSensorPermissions, { once: true });
+document.body.addEventListener('touchstart', requestSensorPermissions, { once: true, passive: true });
 
 function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Використовуємо фізичний CSS-розмір canvas замість розміру видимого вікна.
+    // На мобільних `100vh` не змінюється при скролі (хованні адресної строки),
+    // тому це раз і назавжди вирішує проблему безперервного зуму фону туди-сюди!
+    canvas.width = canvas.clientWidth || window.innerWidth;
+    canvas.height = canvas.clientHeight || window.innerHeight;
     gl.viewport(0, 0, canvas.width, canvas.height);
 }
 window.addEventListener('resize', resize);

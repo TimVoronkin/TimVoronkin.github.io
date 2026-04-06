@@ -1,0 +1,25 @@
+{
+  "name": "timvoronkin.github.io",
+  "version": "1.0.0",
+  "description": "Дивлюсь я на небо та й думку гадаю: ото нашо мені якісь ліві сервіси щоб переадресовувати на мої соц.мережі? Я ж типу як веб розробник! Можу і сам свою незалежну сторінку зробити та оформити її як захочу :D\r Отак і зробив.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tailwindcss -i input.css -o tailwind.css --content './**/*.{html,js}'",
+    "watch": "tailwindcss -i input.css -o tailwind.css --content './**/*.{html,js}' --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TimVoronkin/TimVoronkin.github.io.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TimVoronkin/TimVoronkin.github.io/issues"
+  },
+  "homepage": "https://github.com/TimVoronkin/TimVoronkin.github.io#readme",
+  "devDependencies": {
+    "tailwindcss": "^3.4.19"
+  }
+}

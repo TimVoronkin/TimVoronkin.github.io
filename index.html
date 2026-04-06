@@ -7,9 +7,9 @@
     <!-- Favicon -->
     <link rel="icon" href="imgs/favicon.png" type="image/png">
     <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="tailwind.css">
     <!-- FontAwesome CDN (updated to 6.5.1 for X Twitter icon) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
@@ -22,7 +22,7 @@
 <body class="text-gray-100 flex items-center justify-center py-12 px-4 selection:bg-[#BCF600] selection:text-black relative overflow-x-hidden">
     
     <!-- WebGL Canvas for Depth Parallax -->
-    <canvas id="bg-canvas" class="fixed top-0 left-0 w-full h-full -z-20 pointer-events-none"></canvas>
+    <canvas id="bg-canvas" class="fixed top-0 left-0 w-full h-full -z-20 pointer-events-none" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -20; pointer-events: none;"></canvas>
 
     <!-- SVG Refraction Filter for Liquid Glass Effect -->
     <svg style="position: absolute; width: 0; height: 0;" aria-hidden="true">
@@ -33,7 +33,7 @@
         </filter>
     </svg>
 
-    <main class="w-full max-w-lg glass-card rounded-[3rem] p-8 pt-10 sm:p-10 relative z-10">
+    <main class="w-full max-w-lg glass-card rounded-[3rem] p-5 pt-8 sm:p-10 relative z-10">
         
         <!-- Header Section -->
         <header class="flex flex-col items-center mb-10">
@@ -52,60 +52,71 @@
         <!-- Links Section -->
         <section class="flex flex-col gap-4">
             
-            <a href="https://www.instagram.com/timvoronkin" target="_blank" rel="noopener noreferrer" data-goatcounter-click="social-instagram-main" data-goatcounter-title="Instagram (Me)" class="link-btn instagram group block w-full py-4 px-6 rounded-full text-center text-white/90 font-medium decoration-none relative">
-                <i class="fa-brands fa-instagram link-icon text-gray-300"></i>
-                <span class="relative z-10 w-full inline-block px-10">Instagram - me</span>
+            <a href="https://www.instagram.com/timvoronkin" target="_blank" rel="noopener noreferrer" data-goatcounter-click="social-instagram-main" data-goatcounter-title="Instagram (Me)" class="link-btn instagram group grid grid-cols-[2rem_1fr_2rem] gap-2 items-center w-full min-h-[4.2rem] py-3 px-4 sm:px-6 rounded-[2rem] text-white/90 font-medium decoration-none relative">
+                <div class="flex items-center justify-center"><i class="fa-brands link-icon fa-instagram text-xl sm:text-2xl text-gray-300 transition-colors group-hover:text-current"></i></div>
+                <span class="w-full text-center leading-tight py-1">Instagram - me</span>
+                <div></div>
             </a>
 
-            <a href="https://instagram.com/Scrap_Art_TimVoronkin" target="_blank" rel="noopener noreferrer" data-goatcounter-click="social-instagram-metal" data-goatcounter-title="Instagram (Metal Artworks)" class="link-btn instagram group block w-full py-4 px-6 rounded-full text-center text-white/90 font-medium decoration-none relative">
-                <i class="fa-brands fa-instagram link-icon text-gray-300"></i>
-                <span class="relative z-10 w-full inline-block px-10">Instagram - my metal artworks</span>
+            <a href="https://instagram.com/Scrap_Art_TimVoronkin" target="_blank" rel="noopener noreferrer" data-goatcounter-click="social-instagram-metal" data-goatcounter-title="Instagram (Metal Artworks)" class="link-btn instagram group grid grid-cols-[2rem_1fr_2rem] gap-2 items-center w-full min-h-[4.2rem] py-3 px-4 sm:px-6 rounded-[2rem] text-white/90 font-medium decoration-none relative">
+                <div class="flex items-center justify-center"><i class="fa-brands link-icon fa-instagram text-xl sm:text-2xl text-gray-300 transition-colors group-hover:text-current"></i></div>
+                <span class="w-full text-center leading-tight py-1">Instagram - my metal artworks</span>
+                <div></div>
             </a>
 
-            <a href="https://zvit.artstation.com/" target="_blank" rel="noopener noreferrer" data-goatcounter-click="social-artstation" data-goatcounter-title="Artstation" class="link-btn artstation group block w-full py-4 px-6 rounded-full text-center text-white/90 font-medium decoration-none relative">
-                <i class="fa-brands fa-artstation link-icon text-gray-300"></i>
-                <span class="relative z-10 w-full inline-block px-10">Artstation - my VR projects</span>
+            <a href="https://zvit.artstation.com/" target="_blank" rel="noopener noreferrer" data-goatcounter-click="social-artstation" data-goatcounter-title="Artstation" class="link-btn artstation group grid grid-cols-[2rem_1fr_2rem] gap-2 items-center w-full min-h-[4.2rem] py-3 px-4 sm:px-6 rounded-[2rem] text-white/90 font-medium decoration-none relative">
+                <div class="flex items-center justify-center"><i class="fa-brands link-icon fa-artstation text-xl sm:text-2xl text-gray-300 transition-colors group-hover:text-current"></i></div>
+                <span class="w-full text-center leading-tight py-1">Artstation - my VR projects</span>
+                <div></div>
             </a>
 
-            <a href="http://t.me/Tim_Voronkin" target="_blank" rel="noopener noreferrer" data-goatcounter-click="social-telegram" data-goatcounter-title="Telegram" class="link-btn telegram group block w-full py-4 px-6 rounded-full text-center text-white/90 font-medium decoration-none relative">
-                <i class="fa-brands fa-telegram link-icon text-gray-300"></i>
-                <span class="relative z-10 w-full inline-block px-10">Telegram - write me</span>
+            <a href="http://t.me/Tim_Voronkin" target="_blank" rel="noopener noreferrer" data-goatcounter-click="social-telegram" data-goatcounter-title="Telegram" class="link-btn telegram group grid grid-cols-[2rem_1fr_2rem] gap-2 items-center w-full min-h-[4.2rem] py-3 px-4 sm:px-6 rounded-[2rem] text-white/90 font-medium decoration-none relative">
+                <div class="flex items-center justify-center"><i class="fa-brands link-icon fa-telegram text-xl sm:text-2xl text-gray-300 transition-colors group-hover:text-current"></i></div>
+                <span class="w-full text-center leading-tight py-1">Telegram - write me</span>
+                <div></div>
             </a>
 
-            <a href="https://linkedin.com/in/tim-voronkin/" target="_blank" rel="noopener noreferrer" data-goatcounter-click="social-linkedin" data-goatcounter-title="LinkedIn" class="link-btn linkedin group block w-full py-4 px-6 rounded-full text-center text-white/90 font-medium decoration-none relative">
-                <i class="fa-brands fa-linkedin link-icon text-gray-300"></i>
-                <span class="relative z-10 w-full inline-block px-10">LinkedIn</span>
+            <a href="https://linkedin.com/in/tim-voronkin/" target="_blank" rel="noopener noreferrer" data-goatcounter-click="social-linkedin" data-goatcounter-title="LinkedIn" class="link-btn linkedin group grid grid-cols-[2rem_1fr_2rem] gap-2 items-center w-full min-h-[4.2rem] py-3 px-4 sm:px-6 rounded-[2rem] text-white/90 font-medium decoration-none relative">
+                <div class="flex items-center justify-center"><i class="fa-brands link-icon fa-linkedin text-xl sm:text-2xl text-gray-300 transition-colors group-hover:text-current"></i></div>
+                <span class="w-full text-center leading-tight py-1">LinkedIn</span>
+                <div></div>
             </a>
 
-            <a href="http://facebook.com/TimVoronkin" target="_blank" rel="noopener noreferrer" data-goatcounter-click="social-facebook" data-goatcounter-title="Facebook" class="link-btn facebook group block w-full py-4 px-6 rounded-full text-center text-white/90 font-medium decoration-none relative">
-                <i class="fa-brands fa-facebook link-icon text-gray-300"></i>
-                <span class="relative z-10 w-full inline-block px-10">Facebook</span>
+            <a href="http://facebook.com/TimVoronkin" target="_blank" rel="noopener noreferrer" data-goatcounter-click="social-facebook" data-goatcounter-title="Facebook" class="link-btn facebook group grid grid-cols-[2rem_1fr_2rem] gap-2 items-center w-full min-h-[4.2rem] py-3 px-4 sm:px-6 rounded-[2rem] text-white/90 font-medium decoration-none relative">
+                <div class="flex items-center justify-center"><i class="fa-brands link-icon fa-facebook text-xl sm:text-2xl text-gray-300 transition-colors group-hover:text-current"></i></div>
+                <span class="w-full text-center leading-tight py-1">Facebook</span>
+                <div></div>
             </a>
 
-            <a href="https://x.com/Tim_Voronkin" target="_blank" rel="noopener noreferrer" data-goatcounter-click="social-twitter" data-goatcounter-title="X (Twitter)" class="link-btn twitter group block w-full py-4 px-6 rounded-full text-center text-white/90 font-medium decoration-none relative">
-                <i class="fa-brands fa-x-twitter link-icon text-gray-300"></i>
-                <span class="relative z-10 w-full inline-block px-10">X (Twitter)</span>
+            <a href="https://x.com/Tim_Voronkin" target="_blank" rel="noopener noreferrer" data-goatcounter-click="social-twitter" data-goatcounter-title="X (Twitter)" class="link-btn twitter group grid grid-cols-[2rem_1fr_2rem] gap-2 items-center w-full min-h-[4.2rem] py-3 px-4 sm:px-6 rounded-[2rem] text-white/90 font-medium decoration-none relative">
+                <div class="flex items-center justify-center"><i class="fa-brands link-icon fa-x-twitter text-xl sm:text-2xl text-gray-300 transition-colors group-hover:text-current"></i></div>
+                <span class="w-full text-center leading-tight py-1">X (Twitter)</span>
+                <div></div>
             </a>
 
-            <a href="https://github.com/TimVoronkin" target="_blank" rel="noopener noreferrer" data-goatcounter-click="social-github" data-goatcounter-title="GitHub" class="link-btn github group block w-full py-4 px-6 rounded-full text-center text-white/90 font-medium decoration-none relative">
-                <i class="fa-brands fa-github link-icon text-gray-300"></i>
-                <span class="relative z-10 w-full inline-block px-10">GitHub</span>
+            <a href="https://github.com/TimVoronkin" target="_blank" rel="noopener noreferrer" data-goatcounter-click="social-github" data-goatcounter-title="GitHub" class="link-btn github group grid grid-cols-[2rem_1fr_2rem] gap-2 items-center w-full min-h-[4.2rem] py-3 px-4 sm:px-6 rounded-[2rem] text-white/90 font-medium decoration-none relative">
+                <div class="flex items-center justify-center"><i class="fa-brands link-icon fa-github text-xl sm:text-2xl text-gray-300 transition-colors group-hover:text-current"></i></div>
+                <span class="w-full text-center leading-tight py-1">GitHub</span>
+                <div></div>
             </a>
 
-            <a href="https://discordapp.com/users/577953137441243168" target="_blank" rel="noopener noreferrer" data-goatcounter-click="social-discord-profile" data-goatcounter-title="Discord Profile" class="link-btn discord group block w-full py-4 px-6 rounded-full text-center text-white/90 font-medium decoration-none relative">
-                <i class="fa-brands fa-discord link-icon text-gray-300"></i>
-                <span class="relative z-10 w-full inline-block px-10">Discord</span>
+            <a href="https://discordapp.com/users/577953137441243168" target="_blank" rel="noopener noreferrer" data-goatcounter-click="social-discord-profile" data-goatcounter-title="Discord Profile" class="link-btn discord group grid grid-cols-[2rem_1fr_2rem] gap-2 items-center w-full min-h-[4.2rem] py-3 px-4 sm:px-6 rounded-[2rem] text-white/90 font-medium decoration-none relative">
+                <div class="flex items-center justify-center"><i class="fa-brands link-icon fa-discord text-xl sm:text-2xl text-gray-300 transition-colors group-hover:text-current"></i></div>
+                <span class="w-full text-center leading-tight py-1">Discord</span>
+                <div></div>
             </a>
 
-            <a href="http://youtube.com/channel/UC8V9Y8C7rXRf4XtoHZDRUyw" target="_blank" rel="noopener noreferrer" data-goatcounter-click="social-youtube" data-goatcounter-title="YouTube" class="link-btn youtube group block w-full py-4 px-6 rounded-full text-center text-white/90 font-medium decoration-none relative">
-                <i class="fa-brands fa-youtube link-icon text-gray-300"></i>
-                <span class="relative z-10 w-full inline-block px-10">YouTube</span>
+            <a href="http://youtube.com/channel/UC8V9Y8C7rXRf4XtoHZDRUyw" target="_blank" rel="noopener noreferrer" data-goatcounter-click="social-youtube" data-goatcounter-title="YouTube" class="link-btn youtube group grid grid-cols-[2rem_1fr_2rem] gap-2 items-center w-full min-h-[4.2rem] py-3 px-4 sm:px-6 rounded-[2rem] text-white/90 font-medium decoration-none relative">
+                <div class="flex items-center justify-center"><i class="fa-brands link-icon fa-youtube text-xl sm:text-2xl text-gray-300 transition-colors group-hover:text-current"></i></div>
+                <span class="w-full text-center leading-tight py-1">YouTube</span>
+                <div></div>
             </a>
 
             <!-- Email (Copy to Clipboard) -->
-            <button type="button" id="copy-email-btn" class="link-btn email group block w-full py-4 px-6 rounded-full text-center text-white/90 font-medium decoration-none relative overflow-hidden outline-none cursor-pointer">
-                <i class="fa-solid fa-envelope link-icon text-gray-300"></i>
-                <span id="email-text" class="relative z-10 w-full inline-block px-10">voronkintim@gmail.com</span>
+            <button type="button" id="copy-email-btn" class="link-btn email group grid grid-cols-[2rem_1fr_2rem] gap-2 items-center w-full min-h-[4.2rem] py-3 px-4 sm:px-6 rounded-[2rem] text-white/90 font-medium decoration-none relative overflow-hidden outline-none cursor-pointer">
+                <div class="flex items-center justify-center"><i class="fa-solid link-icon fa-envelope text-xl sm:text-2xl text-gray-300 transition-colors group-hover:text-current"></i></div>
+                <span id="email-text" class="w-full text-center leading-tight py-1">voronkintim@gmail.com</span>
+                <div></div>
             </button>
             
         </section>

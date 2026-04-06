@@ -115,6 +115,15 @@ body {
     color: #FF0000 !important;
 }
 
+.link-btn.github:hover {
+    border-color: #ffffff;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2), 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+.link-btn.github:hover .link-icon {
+    color: #ffffff !important;
+}
+
 .link-btn.discord:hover {
     border-color: #5865F2;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2), 0 0 15px rgba(88, 101, 242, 0.5);
